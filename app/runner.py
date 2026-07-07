@@ -2,7 +2,7 @@ from typing import Optional
 
 from config.loader import load_accounts
 from config.loader import load_config
-
+from domain.models.tweet import Tweet
 from exporters import RSSExporter
 from fetchers import NitterFetcher
 from infrastructure.http import HTTPClient
@@ -23,20 +23,22 @@ def run() -> None:
 
     try:
         for account in accounts:
-            response = fetch_account(
+            output_path = config.rss.output_path / f"{account.username}.xml"
+            response, tweets = fetch_and_parse_account(
                 username=account.username,
                 endpoints=config.provider.endpoints,
                 client=client,
+                parser=parser,
             )
 
             if response is None:
                 print("=" * 60)
                 print(account.username)
-                print("Failed      : all endpoints failed")
+                print("Failed      : all endpoints failed or returned no tweets")
+                if output_path.exists():
+                    output_path.unlink()
+                    print(f"Removed     : {output_path}")
                 continue
-
-            tweets = parser.parse(response)
-            output_path = config.rss.output_path / f"{account.username}.xml"
 
             exporter.export(
                 tweets,
@@ -68,12 +70,13 @@ def run() -> None:
         client.close()
 
 
-def fetch_account(
+def fetch_and_parse_account(
     *,
     username: str,
     endpoints: list[str],
     client: HTTPClient,
-) -> Optional[RawResponse]:
+    parser: HTMLTweetParser,
+) -> tuple[Optional[RawResponse], list[Tweet]]:
     for endpoint in endpoints:
         fetcher = NitterFetcher(
             endpoint=endpoint,
@@ -81,11 +84,24 @@ def fetch_account(
         )
 
         try:
-            return fetcher.fetch(username)
+            response = fetcher.fetch(username)
+            tweets = parser.parse(response)
+
+            print("=" * 60)
+            print(username)
+            print(f"Endpoint    : {endpoint}")
+            print(f"Status      : {response.status_code}")
+            print(f"Bytes       : {len(response.text.encode())}")
+            print(f"Tweets      : {len(tweets)}")
+
+            if tweets:
+                return response, tweets
+
+            print("Skip        : no tweets parsed")
         except Exception as exc:
             print("=" * 60)
             print(username)
             print(f"Endpoint    : {endpoint}")
             print(f"Error       : {exc}")
 
-    return None
+    return None, []
