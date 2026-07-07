@@ -1,9 +1,12 @@
+from typing import Optional
+
 from config.loader import load_accounts
 from config.loader import load_config
 
 from exporters import RSSExporter
 from fetchers import NitterFetcher
 from infrastructure.http import HTTPClient
+from infrastructure.http import RawResponse
 from parsers import HTMLTweetParser
 
 
@@ -15,25 +18,31 @@ def run() -> None:
         timeout=config.http.timeout,
     )
 
-    fetcher = NitterFetcher(
-        endpoint=config.provider.endpoints[0],
-        client=client,
-    )
     parser = HTMLTweetParser()
     exporter = RSSExporter()
 
     try:
         for account in accounts:
-            response = fetcher.fetch(account.username)
+            response = fetch_account(
+                username=account.username,
+                endpoints=config.provider.endpoints,
+                client=client,
+            )
+
+            if response is None:
+                print("=" * 60)
+                print(account.username)
+                print("Failed      : all endpoints failed")
+                continue
+
             tweets = parser.parse(response)
             output_path = config.rss.output_path / f"{account.username}.xml"
-            feed_link = f"{fetcher.endpoint}/{account.username}"
 
             exporter.export(
                 tweets,
                 output_path=output_path,
                 title=f"@{account.username} on X",
-                link=feed_link,
+                link=response.url,
                 description=f"RSS feed for @{account.username}",
             )
 
@@ -57,3 +66,26 @@ def run() -> None:
 
     finally:
         client.close()
+
+
+def fetch_account(
+    *,
+    username: str,
+    endpoints: list[str],
+    client: HTTPClient,
+) -> Optional[RawResponse]:
+    for endpoint in endpoints:
+        fetcher = NitterFetcher(
+            endpoint=endpoint,
+            client=client,
+        )
+
+        try:
+            return fetcher.fetch(username)
+        except Exception as exc:
+            print("=" * 60)
+            print(username)
+            print(f"Endpoint    : {endpoint}")
+            print(f"Error       : {exc}")
+
+    return None
