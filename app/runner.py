@@ -8,6 +8,7 @@ from fetchers import NitterFetcher
 from infrastructure.http import HTTPClient
 from infrastructure.http import RawResponse
 from parsers import HTMLTweetParser
+from parsers import RSSTweetParser
 
 
 def run() -> None:
@@ -18,7 +19,8 @@ def run() -> None:
         timeout=config.http.timeout,
     )
 
-    parser = HTMLTweetParser()
+    html_parser = HTMLTweetParser()
+    rss_parser = RSSTweetParser()
     exporter = RSSExporter()
 
     try:
@@ -28,7 +30,8 @@ def run() -> None:
                 username=account.username,
                 endpoints=config.provider.endpoints,
                 client=client,
-                parser=parser,
+                html_parser=html_parser,
+                rss_parser=rss_parser,
             )
 
             if response is None:
@@ -75,7 +78,8 @@ def fetch_and_parse_account(
     username: str,
     endpoints: list[str],
     client: HTTPClient,
-    parser: HTMLTweetParser,
+    html_parser: HTMLTweetParser,
+    rss_parser: RSSTweetParser,
 ) -> tuple[Optional[RawResponse], list[Tweet]]:
     for endpoint in endpoints:
         fetcher = NitterFetcher(
@@ -83,13 +87,45 @@ def fetch_and_parse_account(
             client=client,
         )
 
+        result = try_fetch_and_parse(
+            username=username,
+            endpoint=endpoint,
+            source="rss",
+            fetch=lambda: fetcher.fetch_rss(username),
+            parse=rss_parser.parse,
+        )
+        if result is not None:
+            return result
+
+        result = try_fetch_and_parse(
+            username=username,
+            endpoint=endpoint,
+            source="html",
+            fetch=lambda: fetcher.fetch(username),
+            parse=html_parser.parse,
+        )
+        if result is not None:
+            return result
+
+    return None, []
+
+
+def try_fetch_and_parse(
+    *,
+    username: str,
+    endpoint: str,
+    source: str,
+    fetch,
+    parse,
+) -> Optional[tuple[RawResponse, list[Tweet]]]:
         try:
-            response = fetcher.fetch(username)
-            tweets = parser.parse(response)
+            response = fetch()
+            tweets = parse(response)
 
             print("=" * 60)
             print(username)
             print(f"Endpoint    : {endpoint}")
+            print(f"Source      : {source}")
             print(f"Status      : {response.status_code}")
             print(f"Bytes       : {len(response.text.encode())}")
             print(f"Tweets      : {len(tweets)}")
@@ -102,6 +138,7 @@ def fetch_and_parse_account(
             print("=" * 60)
             print(username)
             print(f"Endpoint    : {endpoint}")
+            print(f"Source      : {source}")
             print(f"Error       : {exc}")
 
-    return None, []
+        return None
