@@ -19,3 +19,8 @@ class NitterFetcher(BaseFetcher):
         url = f"{self.endpoint}/{username}"
 
         return self.client.get(url)
+
+    def fetch_rss(self, username: str) -> RawResponse:
+        url = f"{self.endpoint}/{username}/rss"
+
+        return self.client.get(url)
