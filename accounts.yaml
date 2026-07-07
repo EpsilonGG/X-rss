@@ -1,3 +1,5 @@
 accounts:
 
   - username: OpenAI
+  - username: SCA_DI
+  - username: mimo_chorion
