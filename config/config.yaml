@@ -2,7 +2,10 @@ provider:
 
   endpoints:
 
+    - https://nitter.poast.org
     - https://xcancel.com
+    - https://nitter.privacydev.net
+    - https://nitter.tiekoetter.com
 
 http:
 
