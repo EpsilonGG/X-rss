@@ -9,12 +9,13 @@ from infrastructure.http import HTTPClient
 from infrastructure.http import RawResponse
 from parsers import HTMLTweetParser
 from parsers import RSSTweetParser
-
+from app.endpoint_pool import EndpointPool
 
 def run() -> None:
     config = load_config()
     accounts = load_accounts()
-
+    endpoint_pool = EndpointPool(config.provider.endpoints)
+    
     client = HTTPClient(
         timeout=config.http.timeout,
     )
@@ -28,7 +29,7 @@ def run() -> None:
             output_path = config.rss.output_path / f"{account.username}.xml"
             response, tweets = fetch_and_parse_account(
                 username=account.username,
-                endpoints=config.provider.endpoints,
+                endpoint_pool=endpoint_pool,
                 client=client,
                 html_parser=html_parser,
                 rss_parser=rss_parser,
