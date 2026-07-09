@@ -14,6 +14,9 @@ from app.endpoint_pool import EndpointPool
 def run() -> None:
     config = load_config()
     accounts = load_accounts()
+    client = HTTPClient(
+        timeout=config.http.timeout,
+    )
     endpoint_pool = EndpointPool(config.provider.endpoints)
     fetchers = {
         endpoint: NitterFetcher(
@@ -23,10 +26,6 @@ def run() -> None:
         for endpoint in config.provider.endpoints
     }
     
-    client = HTTPClient(
-        timeout=config.http.timeout,
-    )
-
     html_parser = HTMLTweetParser()
     rss_parser = RSSTweetParser()
     exporter = RSSExporter()
