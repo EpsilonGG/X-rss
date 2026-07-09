@@ -15,6 +15,13 @@ def run() -> None:
     config = load_config()
     accounts = load_accounts()
     endpoint_pool = EndpointPool(config.provider.endpoints)
+    fetchers = {
+        endpoint: NitterFetcher(
+            endpoint=endpoint,
+            client=client,
+        )
+        for endpoint in config.provider.endpoints
+    }
     
     client = HTTPClient(
         timeout=config.http.timeout,
@@ -30,7 +37,7 @@ def run() -> None:
             response, tweets = fetch_and_parse_account(
                 username=account.username,
                 endpoint_pool=endpoint_pool,
-                client=client,
+                fetchers=fetchers,
                 html_parser=html_parser,
                 rss_parser=rss_parser,
             )
@@ -77,16 +84,13 @@ def run() -> None:
 def fetch_and_parse_account(
     *,
     username: str,
-    endpoints: list[str],
-    client: HTTPClient,
+    endpoint_pool: EndpointPool,
+    fetchers: dict[str, NitterFetcher],
     html_parser: HTMLTweetParser,
     rss_parser: RSSTweetParser,
 ) -> tuple[Optional[RawResponse], list[Tweet]]:
-    for endpoint in endpoints:
-        fetcher = NitterFetcher(
-            endpoint=endpoint,
-            client=client,
-        )
+    for endpoint in endpoint_pool.endpoints():
+        fetcher = fetchers[endpoint]
 
         result = try_fetch_and_parse(
             username=username,
@@ -96,6 +100,7 @@ def fetch_and_parse_account(
             parse=rss_parser.parse,
         )
         if result is not None:
+            endpoint_pool.mark_success(endpoint)
             return result
 
         result = try_fetch_and_parse(
@@ -106,8 +111,10 @@ def fetch_and_parse_account(
             parse=html_parser.parse,
         )
         if result is not None:
+            endpoint_pool.mark_success(endpoint)
             return result
 
+    endpoint_pool.mark_failure(endpoint)
     return None, []
 
 
