@@ -19,10 +19,14 @@ class RSSConfig(BaseModel):
         return Path(self.output)
 
 
-class Config(BaseModel):
+class RSSConfig(BaseModel):
+    output: str = "feeds/"
+    processed_output: str = "feeds_processed/"
 
-    provider: ProviderConfig
+    @property
+    def output_path(self) -> Path:
+        return Path(self.output)
 
-    http: HTTPConfig
-
-    rss: RSSConfig
+    @property
+    def processed_output_path(self) -> Path:
+        return Path(self.processed_output)
