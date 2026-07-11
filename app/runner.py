@@ -10,6 +10,7 @@ from infrastructure.http import RawResponse
 from parsers import HTMLTweetParser
 from parsers import RSSTweetParser
 from app.endpoint_pool import EndpointPool
+from processors import RSSProcessor
 
 def run() -> None:
     config = load_config()
@@ -29,7 +30,10 @@ def run() -> None:
     html_parser = HTMLTweetParser()
     rss_parser = RSSTweetParser()
     exporter = RSSExporter()
-
+    processor = RSSProcessor(
+        output_dir=config.rss.processed_output_path,
+    )
+    
     try:
         for account in accounts:
             output_path = config.rss.output_path / f"{account.username}.xml"
@@ -75,6 +79,10 @@ def run() -> None:
                 print(latest.url)
                 print()
                 print(latest.content[:200])
+
+        processor.process_directory(
+            config.rss.output_path,
+        )
 
     finally:
         client.close()
