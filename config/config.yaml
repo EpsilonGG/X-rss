@@ -15,6 +15,6 @@ http:
 
 rss:
 
-  output: feeds/
+  output: output/feeds/
 
-  processed_output: feeds_processed/
+  processed_output: output/feeds_processed/
