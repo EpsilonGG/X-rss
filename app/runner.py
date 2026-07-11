@@ -37,6 +37,7 @@ def run() -> None:
     try:
         for account in accounts:
             output_path = config.rss.output_path / f"{account.username}.xml"
+            print(f"Output Path : {output_path}")
             response, tweets = fetch_and_parse_account(
                 username=account.username,
                 endpoint_pool=endpoint_pool,
