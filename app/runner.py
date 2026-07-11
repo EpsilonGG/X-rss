@@ -79,12 +79,12 @@ def run() -> None:
                 print(latest.url)
                 print()
                 print(latest.content[:200])
-
+                
+    finally:
         processor.process_directory(
             config.rss.output_path,
         )
-
-    finally:
+    
         client.close()
 
 
