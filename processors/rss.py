@@ -56,7 +56,7 @@ class RSSProcessor:
         for item in items:
             channel.append(item)
 
-        ET.indent(tree, space="    ")
+        ET.indent(tree, space="    ", level=0)
 
         output = self.output_dir / xml_path.name
 
