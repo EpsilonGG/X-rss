@@ -3,7 +3,6 @@ from __future__ import annotations
 import re
 from pathlib import Path
 from email.utils import parsedate_to_datetime
-from xml.dom import minidom
 from xml.etree import ElementTree as ET
 
 
@@ -13,42 +12,29 @@ class RSSProcessor:
         self.output_dir = output_dir
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
-    def process_directory(
-        self,
-        input_dir: Path,
-    ) -> None:
+    def process_directory(self, input_dir: Path) -> None:
+        for file in sorted(input_dir.glob("*.xml")):
+            self.process(file)
 
-        for xml_file in sorted(input_dir.glob("*.xml")):
-            self.process(xml_file)
-
-    def process(
-        self,
-        xml_path: Path,
-    ) -> None:
-
+    def process(self, xml_path: Path) -> None:
         tree = ET.parse(xml_path)
         root = tree.getroot()
 
         channel = root.find("channel")
-
         if channel is None:
             return
 
-        username = self._username(channel)
+        username = self._get_username(channel)
 
-        items = channel.findall("item")
+        items = []
 
         seen = set()
-        processed = []
 
-        for item in items:
+        for item in channel.findall("item"):
 
             self._normalize_title(item)
 
-            self._normalize_links(
-                item,
-                username,
-            )
+            self._normalize_link(item, username)
 
             guid = item.findtext("guid", "")
 
@@ -57,9 +43,9 @@ class RSSProcessor:
 
             seen.add(guid)
 
-            processed.append(item)
+            items.append(item)
 
-        processed.sort(
+        items.sort(
             key=self._pubdate,
             reverse=True,
         )
@@ -67,128 +53,90 @@ class RSSProcessor:
         for item in channel.findall("item"):
             channel.remove(item)
 
-        for item in processed:
+        for item in items:
             channel.append(item)
 
-        xml = ET.tostring(
-            root,
-            encoding="utf-8",
-        )
-
-        pretty = minidom.parseString(xml).toprettyxml(
-            indent="    ",
-            encoding="utf-8",
-        )
+        ET.indent(tree, space="    ")
 
         output = self.output_dir / xml_path.name
 
-        output.write_bytes(pretty)
-
-    def _username(
-        self,
-        channel,
-    ) -> str:
-
-        title = channel.findtext(
-            "title",
-            "",
+        tree.write(
+            output,
+            encoding="utf-8",
+            xml_declaration=True,
         )
 
-        m = re.match(
-            r"@(.+?) on X",
-            title,
-        )
+    def _get_username(self, channel) -> str:
 
-        if m:
-            return m.group(1)
+        title = channel.findtext("title", "")
 
-        return ""
+        m = re.match(r"@(.+?) on X", title)
 
-    def _normalize_links(
-        self,
-        item,
-        username,
-    ) -> None:
+        return m.group(1) if m else ""
+
+    def _normalize_link(self, item, username):
 
         guid = item.find("guid")
-        link = item.find("link")
 
         if guid is None:
             return
 
-        status = self._status_id(
-            guid.text or "",
-        )
+        m = re.search(r"/status/(\d+)", guid.text or "")
 
-        if not status:
+        if not m:
             return
 
-        x = f"https://x.com/{username}/status/{status}"
+        url = f"https://x.com/{username}/status/{m.group(1)}"
 
-        guid.text = x
+        guid.text = url
+
+        link = item.find("link")
 
         if link is not None:
-            link.text = x
+            link.text = url
 
-    def _status_id(
-        self,
-        url: str,
-    ) -> str:
-
-        m = re.search(
-            r"/status/(\d+)",
-            url,
-        )
-
-        if m:
-            return m.group(1)
-
-        return ""
-
-    def _normalize_title(
-        self,
-        item,
-    ) -> None:
+    def _normalize_title(self, item):
 
         title = item.find("title")
 
-        if title is None:
+        if title is None or not title.text:
             return
 
-        text = (title.text or "").strip()
+        text = title.text.strip()
 
+        # 完全重复
+        mid = len(text) // 2
+
+        if len(text) % 2 == 0:
+
+            left = text[:mid].strip()
+
+            right = text[mid:].strip()
+
+            if left == right:
+                title.text = left
+                return
+
+        # 按行重复
         lines = [i.strip() for i in text.splitlines() if i.strip()]
 
-        if len(lines) == 2 and lines[0] == lines[1]:
-            title.text = lines[0]
-            return
+        if len(lines) >= 2:
 
-        words = text.split()
+            half = len(lines) // 2
 
-        if len(words) % 2 == 0:
+            if (
+                len(lines) % 2 == 0
+                and lines[:half] == lines[half:]
+            ):
+                title.text = "\n".join(lines[:half])
 
-            half = len(words) // 2
-
-            if words[:half] == words[half:]:
-
-                title.text = " ".join(words[:half])
-
-    def _pubdate(
-        self,
-        item,
-    ):
+    def _pubdate(self, item):
 
         try:
-
             return parsedate_to_datetime(
-                item.findtext(
-                    "pubDate",
-                    "",
-                )
+                item.findtext("pubDate", "")
             )
-
         except Exception:
-
             return parsedate_to_datetime(
                 "Thu, 01 Jan 1970 00:00:00 +0000"
             )
