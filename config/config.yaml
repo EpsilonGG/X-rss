@@ -8,6 +8,7 @@ provider:
     - https://nitter.no-logs.com
     - https://nitter.privacydev.net
     - https://nitter.tiekoetter.com
+    - https://nitter.miningtcup.me
 
 http:
 
