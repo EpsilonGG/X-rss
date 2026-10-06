@@ -5,7 +5,7 @@ from datetime import timezone
 from email.utils import parsedate_to_datetime
 from urllib.parse import urljoin
 
-from selectolax.parser import HTMLParser
+from selectolax.lexbor import LexborHTMLParser
 
 from domain.models.author import Author
 from domain.models.media import Media
@@ -16,7 +16,7 @@ from parsers.base import BaseParser
 
 class HTMLTweetParser(BaseParser):
     def parse(self, response: RawResponse) -> list[Tweet]:
-        tree = HTMLParser(response.text)
+        tree = LexborHTMLParser(response.text)
         tweets: list[Tweet] = []
         seen_ids: set[str] = set()
 
