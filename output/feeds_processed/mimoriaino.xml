@@ -2,9 +2,16 @@
 <rss version="2.0">
     <channel>
         <title>@mimoriaino on X</title>
-        <link>https://ruf.st/mimoriaino/rss</link>
+        <link>https://nitter.jaydenha.uk/mimoriaino/rss</link>
         <description>RSS feed for @mimoriaino</description>
-        <lastBuildDate>Thu, 19 Nov 2026 23:22:09 +0000</lastBuildDate>
+        <lastBuildDate>Fri, 20 Nov 2026 22:54:34 +0000</lastBuildDate>
+        <item>
+            <title>@mimoriaino: そんな言い方せんでも</title>
+            <link>https://x.com/mimoriaino/status/2123740273826259129</link>
+            <guid>https://x.com/mimoriaino/status/2123740273826259129</guid>
+            <pubDate>Fri, 20 Nov 2026 11:28:33 +0000</pubDate>
+            <description>&lt;p&gt;そんな言い方せんでも&lt;/p&gt;</description>
+        </item>
         <item>
             <title>@mimoriaino: 抱えてる件数が過去最高になった！ 頭パンクしそうだけどありがたやぁ…… 収録がんばるぞ🙌</title>
             <link>https://x.com/mimoriaino/status/2121906128422576248</link>
@@ -137,13 +144,6 @@
             <guid>https://x.com/mimoriaino/status/2074124026306584698</guid>
             <pubDate>Mon, 06 Jul 2026 13:31:17 +0000</pubDate>
             <description>&lt;p&gt;常時ひっくり返るくらいの咳が続いてて寝れないくらいなんだけど&lt;br/&gt;&lt;br/&gt;一応ちゃんと快方には向かってるみたいです&lt;br/&gt;&lt;br/&gt;焦らずなおします&lt;br/&gt;&lt;br/&gt;&lt;br/&gt;&lt;br/&gt;お仕事のリスケとかがけっこう大変で、&lt;br/&gt;&lt;br/&gt;振替の配信を決められる余裕がなくてすみません😢&lt;/p&gt;</description>
-        </item>
-        <item>
-            <title>@mimoriaino: 声帯炎はなおったんですけど咳がとまんなくって 別の病院でステロイドもらいました 火曜日の配信、もしかしたらまた喋らないで縮小でやるかもしれない！</title>
-            <link>https://x.com/mimoriaino/status/2073569546087317526</link>
-            <guid>https://x.com/mimoriaino/status/2073569546087317526</guid>
-            <pubDate>Sun, 05 Jul 2026 00:47:59 +0000</pubDate>
-            <description>&lt;p&gt;声帯炎はなおったんですけど咳がとまんなくって&lt;br/&gt;&lt;br/&gt;別の病院でステロイドもらいました&lt;br/&gt;&lt;br/&gt;火曜日の配信、もしかしたらまた喋らないで縮小でやるかもしれない！&lt;/p&gt;</description>
         </item>
     </channel>
 </rss>
